@@ -30,7 +30,7 @@ def organise(_files, _maxsize):
 	for file in _files:
 		try:
 		    if os.path.getsize(inputDirectory+"/"+file) > _maxsize:
-		        #print(file + " is greater than the maximum attachment size and wont be included")
+		        print(file + " is greater than the maximum attachment size and wont be included")
 		        pass
 		    else:
 		        #Check if current folder we are sending to is > 25mb. If not, add it. If so, make new directory.
@@ -102,7 +102,12 @@ if __name__ == "__main__":
 	#----------- Init variables -----------#
     args = parse_args()
 
-    inputDirectory = args.input
+    if os.path.isdir(args.input):
+        inputDirectory = args.input
+    else:
+        print("[!] The input must me a directory")
+        exit(1)
+
     tempDirectory = "temp_"+str(random.randint(1000,9999))
         
     if args.password:
@@ -131,7 +136,6 @@ if __name__ == "__main__":
     #----------- Create temp output folder ------------#
     if not os.path.isdir(tempDirectory):
     	os.system("mkdir " + tempDirectory)
-
 
     #----------- Organise input into folders  -----------#
     organise(os.listdir(inputDirectory), maxsize)
