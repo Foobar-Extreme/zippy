@@ -17,7 +17,7 @@ def parse_args():
     args = parser.parse_args()
     return args
 
- #----------- Organuse files into directories of X size -----------#
+ #----------- Organise files into directories of X size -----------#
 def organise(_files, _maxsize):
 
 
@@ -35,8 +35,7 @@ def organise(_files, _maxsize):
 		    else:
 		        #Check if current folder we are sending to is > 25mb. If not, add it. If so, make new directory.
 		        if currentsize + os.path.getsize(inputDirectory+"/"+file) > _maxsize:
-		        	#print(currentDir + " is already "+str(currentsize)+" cannot add "+inputDirectory+"/"+file+" which is: "+str(os.path.getsize(inputDirectory+"/"+file)))
-		        	currentDir = "temp_"+str(random.randint(1000,9999))
+                    currentDir = "temp_"+str(random.randint(1000,9999))
 		        	os.system("mkdir "+tempDirectory+"/"+currentDir)
 
 		        	#Put file in new folder
@@ -56,20 +55,18 @@ def organise(_files, _maxsize):
 def zip(_tempDirectory, _dirToZip, _password, _outputFile):
     
     try:
-        #----------- Zip 1 -----------#
-        
+        #----------- Zip 1 -----------# 
         intermediateFile = "intermediate"+str(random.randint(1000,9999))+".txt"
 
         #Check that the folder exists
         if os.path.isdir(_tempDirectory+"/"+_dirToZip):
             print("Creating first zip file " + intermediateFile)
-            os.system("zip -0 -r " + intermediateFile + " "+_tempDirectory+"/"+_dirToZip)
+            os.system("zip -0 -r -j " + intermediateFile + " "+_tempDirectory+"/"+_dirToZip)
         else:
             print("[!] The folder you want to zip does not exist...")
             exit(1)
 
        	#----------- Zip 2 -----------#
-
         if not os.path.exists("zippy_output/"+_outputFile):
         	print("Creating second zip file " + _outputFile)
         	os.system("zip -e -n -r --password "+_password+" zippy_output/"+_outputFile+" "+intermediateFile)
