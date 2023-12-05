@@ -1,150 +1,201 @@
 #!/usr/bin/python3
 
 import os
-import sys
 import argparse
 import random
 import string
 
+
 def parse_args():
     parser = argparse.ArgumentParser()
-    parser.add_argument("-i","--input",help="Input directory", type=str, required=True)
-    parser.add_argument("-p","--password", help="Password for zip file", type=str, required=False)
-    parser.add_argument("-s","--size", help="Set max directory size in bytes (This is pre zip) Default is 25000000", type=str, required=False)
-    parser.add_argument("-f","--force", help="Blat current zippy_output folder", action="store_true", required=False)
-    #parser.add_argument("-d","--dontobsficate", help="FUTURE DEV: Will not nest the zip files to obsficate the filename", type=str, required=False)
-    #parser.add_argument("-o","--optimise", help="FUTURE DEV: Will perform best fit logic. This will result in photos being out of order", type=str, required=False)
+    parser.add_argument(
+        "-i", "--input", help="Input directory", type=str, required=True
+    )
+    parser.add_argument(
+        "-p", "--password", help="Password for zip file", type=str, required=False
+    )
+    parser.add_argument(
+        "-s",
+        "--size",
+        help="Set max directory size in bytes (This is pre zip) Default is 25000000",
+        type=str,
+        required=False,
+    )
+    parser.add_argument(
+        "-f",
+        "--force",
+        help="Blat current zippy_output folder",
+        action="store_true",
+        required=False,
+    )
     args = parser.parse_args()
     return args
 
- #----------- Organise files into directories of X size -----------#
-def organise(_files, _maxsize):
+
+# Seperate out files into temp folders per max file size
+def organise(_files, _max_size):
+    current_size = 0
+
+    # Initialise first folders to copy to.
+    current_directory = "temp_" + str(random.randint(1000, 9999))
+    os.system("mkdir " + temp_directory + "/" + current_directory)
+
+    for file in _files:
+        try:
+            if os.path.getsize(input_directory + "/" + file) > _max_size:
+                print(
+                    file
+                    + " is greater than the maximum attachment size and wont be included"
+                )
+                pass
+            else:
+                # Check if current folder we are sending to is > 25mb. If not, add it.
+                # If so, make new directory.
+                if (
+                    current_size + os.path.getsize(input_directory + "/" + file)
+                    > _max_size
+                ):
+                    current_directory = "temp_" + str(random.randint(1000, 9999))
+                    os.system("mkdir " + temp_directory + "/" + current_directory)
+
+                    # Put file in new folder
+                    os.system(
+                        "cp "
+                        + input_directory
+                        + "/"
+                        + file
+                        + " "
+                        + temp_directory
+                        + "/"
+                        + current_directory
+                    )
+                    current_size = os.path.getsize(input_directory + "/" + file)
+                else:
+                    # Put file in current folder
+                    os.system(
+                        "cp "
+                        + input_directory
+                        + "/"
+                        + file
+                        + " "
+                        + temp_directory
+                        + "/"
+                        + current_directory
+                    )
+                    current_size += os.path.getsize(input_directory + "/" + file)
+
+        except Exception as e:
+            print(e)
 
 
-	currentsize = 0
-
-	#Initialise first folders to copy to.
-	currentDir = "temp_"+str(random.randint(1000,9999))
-	os.system("mkdir "+tempDirectory+"/"+currentDir)
-
-	for file in _files:
-		try:
-		    if os.path.getsize(inputDirectory+"/"+file) > _maxsize:
-		        print(file + " is greater than the maximum attachment size and wont be included")
-		        pass
-		    else:
-		        #Check if current folder we are sending to is > 25mb. If not, add it. If so, make new directory.
-		        if currentsize + os.path.getsize(inputDirectory+"/"+file) > _maxsize:
-                    currentDir = "temp_"+str(random.randint(1000,9999))
-		        	os.system("mkdir "+tempDirectory+"/"+currentDir)
-
-		        	#Put file in new folder
-		        	os.system("cp "+inputDirectory+"/"+file+" "+tempDirectory+"/"+currentDir)
-		        	currentsize = os.path.getsize(inputDirectory+"/"+file) 
-		        else:
-		            #Put file in current folder
-		            os.system("cp "+inputDirectory+"/"+file+" "+tempDirectory+"/"+currentDir)
-		            currentsize += os.path.getsize(inputDirectory+"/"+file)
-		            #print("Current size: "+ str(currentsize))
-
-		except Exception as e:
-		    print(e)
-
-
- #----------- Zip folders into a nested format for Gmail/Gsec -----------#
-def zip(_tempDirectory, _dirToZip, _password, _outputFile):
-    
+# Create zip files
+def zip(_temp_directory, _dir_to_zip, _password, _outputFile):
     try:
-        #----------- Zip 1 -----------# 
-        intermediateFile = "intermediate"+str(random.randint(1000,9999))+".txt"
+        # Process zip 1
+        intermediate_file = "intermediate" + str(random.randint(1000, 9999)) + ".txt"
 
-        #Check that the folder exists
-        if os.path.isdir(_tempDirectory+"/"+_dirToZip):
-            print("Creating first zip file " + intermediateFile)
-            os.system("zip -0 -r -j " + intermediateFile + " "+_tempDirectory+"/"+_dirToZip)
+        if os.path.isdir(_temp_directory + "/" + _dir_to_zip):
+            print("Creating first zip file " + intermediate_file)
+            os.system(
+                "zip -0 -r -j "
+                + intermediate_file
+                + " "
+                + _temp_directory
+                + "/"
+                + _dir_to_zip
+            )
         else:
             print("[!] The folder you want to zip does not exist...")
             exit(1)
 
-       	#----------- Zip 2 -----------#
-        if not os.path.exists("zippy_output/"+_outputFile):
-        	print("Creating second zip file " + _outputFile)
-        	os.system("zip -e -n -r --password "+_password+" zippy_output/"+_outputFile+" "+intermediateFile)
+        # Process zip 2
+        if not os.path.exists("zippy_output/" + _outputFile):
+            print("Creating second zip file " + _outputFile)
+            os.system(
+                "zip -e -n -r --password "
+                + _password
+                + " zippy_output/"
+                + _outputFile
+                + " "
+                + intermediate_file
+            )
 
-       		#Add file and the password to a list
-       		passwords.append(_outputFile + "," +_password)
+            cleanup(intermediate_file)
 
-       		#Clean up intermediate file
-       		cleanup(intermediateFile)
-
-       	else:
-        	print("[!] The output file you have specified already exists...")
-        	cleanup(intermediateFile)
-        	exit(1)
+        else:
+            print("[!] The output file you have specified already exists...")
+            cleanup(intermediate_file)
+            exit(1)
 
     except Exception as e:
         print("[!] Oh noooooo " + str(e))
         exit(1)
 
-#----------- Delete file/directory given -----------#
+
+# Clean up temporary files
 def cleanup(_toDelete):
     try:
-    	if os.path.isdir:
-    		os.system("rm -r "+_toDelete)
-    	else:
-        	os.system("rm "+_toDelete)
+        if os.path.isdir:
+            os.system("rm -r " + _toDelete)
+        else:
+            os.system("rm " + _toDelete)
     except:
         pass
 
 
 if __name__ == "__main__":
+    print(
+        """\
+  ______ _                      
+ |___  /(_)                     
+    / /  _  _ __   _ __   _   _ 
+   / /  | || '_ \ | '_ \ | | | |
+  / /__ | || |_) || |_) || |_| |
+ /_____||_|| .__/ | .__/  \__, |
+           | |    | |      __/ |
+           |_|    |_|     |___/ 
+"""
+    )
 
-	#----------- Init variables -----------#
     args = parse_args()
 
     if os.path.isdir(args.input):
-        inputDirectory = args.input
+        input_directory = args.input
     else:
         print("[!] The input must me a directory")
         exit(1)
 
-    tempDirectory = "temp_"+str(random.randint(1000,9999))
-        
+    temp_directory = "temp_" + str(random.randint(1000, 9999))
+
     if args.password:
         password = args.password
     else:
         password = "".join(random.choices(string.ascii_uppercase + string.digits, k=20))
 
     if args.size:
-    	maxsize = args.size
+        max_size = args.size
     else:
-    	maxsize = 25000000
+        max_size = 25000000
 
-    #----------- Future use -----------#
-    passwords =["folder,password"]
-    
-    #----------- Check and create output -----------#
     if os.path.exists("zippy_output") and not args.force:
-    	print("The directory zippy_output already exists. Please delete it for run with --force.")
-    	exit(1)
+        print(
+            "The directory zippy_output already exists. Please delete it for run with --force."
+        )
+        exit(1)
     elif os.path.exists("zippy_output") and args.force:
-    	os.system("mv zippy_output zippy_output_"+str(random.randint(1000,9999)))
-    	os.system("mkdir zippy_output")
+        os.system("mv zippy_output zippy_output_" + str(random.randint(1000, 9999)))
+        os.system("mkdir zippy_output")
     elif not os.path.exists("zippy_output"):
-    	os.system("mkdir zippy_output")
+        os.system("mkdir zippy_output")
 
-    #----------- Create temp output folder ------------#
-    if not os.path.isdir(tempDirectory):
-    	os.system("mkdir " + tempDirectory)
+    if not os.path.isdir(temp_directory):
+        os.system("mkdir " + temp_directory)
 
-    #----------- Organise input into folders  -----------#
-    organise(os.listdir(inputDirectory), maxsize)
+    organise(os.listdir(input_directory), max_size)
 
-    #----------- Zip folders -----------#
-    for index,dirToZip in enumerate(os.listdir(tempDirectory)):
-    	zip(tempDirectory,dirToZip,password,"zip_"+str(index))
-
+    for index, dir_to_zip in enumerate(os.listdir(temp_directory)):
+        zip(temp_directory, dir_to_zip, password, "zip_" + str(index))
 
     print("\n[*] Cleaning up...")
-    cleanup(tempDirectory)
+    cleanup(temp_directory)
     print("[*] Zipping complete. All zips are protected with password: " + password)
